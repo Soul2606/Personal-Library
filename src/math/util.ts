@@ -6,13 +6,6 @@ export function relu(x: number) {
 
 
 export function clamp(val: number, min: number = 0, max: number = 1) {
-	const validate = (n: number) => {
-		if (Number.isNaN(n)) throw new Error("type error. value must be a number")
-		if (typeof n !== 'number') throw new Error("type error. value must be a number")
-	}
-	validate(val)
-	validate(min)
-	validate(max)
 	return Math.max(min, Math.min(max, val))
 }
 
