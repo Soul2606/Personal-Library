@@ -86,4 +86,8 @@ export class Vector2D {
 	cross(vec:Vector2D){
 		return this.x * vec.y - this.y * vec.x
 	}
+
+	orient(a:Vector2D, b:Vector2D) {
+		return Vector2D.from(a).subtract(this).cross(Vector2D.from(b).subtract(this))
+	}
 };

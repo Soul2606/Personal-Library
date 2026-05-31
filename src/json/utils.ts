@@ -78,3 +78,42 @@ export function walkJson(obj: JSONValue, fnc: (args:WalkJsonArgs)=>void): void {
 
 	return recurse(obj, null, [])
 }
+
+
+
+
+export function JSONEquals(obj1:JSONValue, obj2:JSONValue): boolean {
+	function tupleToString(arr: readonly (string | number)[]): string {
+		return arr
+		.map(v => typeof v === "string" ? `'${v}'` : String(v))
+		.join(",");
+	}
+
+	function setEquals(a: Set<string>, b: Set<string>): boolean {
+		if (a.size !== b.size) return false;
+		for (const v of a) {
+			if (!b.has(v)) return false;
+		}
+		return true;
+	}
+
+
+	const pathMap = new Map<string, unknown>()
+	const paths = new Set<string>()
+
+	walkJson(obj1, ({value, path})=>{
+		pathMap.set(tupleToString(path), value)
+	})
+
+	let mismatch = false
+	walkJson(obj2, ({value, path})=>{
+		paths.add(tupleToString(path))
+		const value2 = pathMap.get(tupleToString(path))
+		if (!pathMap.has(tupleToString(path))) mismatch = true
+		if (value2 !== value && typeof value !== 'object' && typeof value2 !== 'object') mismatch = true
+	})
+	if (mismatch) return false
+
+	return setEquals(new Set(pathMap.keys()), paths)
+}
+
