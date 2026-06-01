@@ -23,9 +23,13 @@ export class Vector2D {
 
 	x: number
 	y: number
-	constructor(x:number = 0, y:number = 0){
+	constructor(x:number = 0, y?:number){
 		this.x = x
-		this.y = y
+		if (y === undefined) {
+			this.y = x
+		} else {
+			this.y = y
+		}	
 	}
 
 	get length(): number {
@@ -36,24 +40,17 @@ export class Vector2D {
 		this.x += value.x,
 		this.y += value.y
 		return this
-		
 	}
 
 	subtract(value: Vector2D) {
 		this.x -= value.x,
 		this.y -= value.y
 		return this
-		
 	}
 
-	multiply(value: number|Vector2D) {
-		if (value instanceof Vector2D) {
-			this.x *= value.x
-			this.y *= value.y
-			return this
-		}
-		this.x *= value
-		this.y *= value
+	multiply(value: Vector2D) {
+		this.x *= value.x
+		this.y *= value.y
 		return this
 	}
 
@@ -68,14 +65,20 @@ export class Vector2D {
 		return this
 	}
 
+	scale(value:number){
+		this.x *= value
+		this.y *= value
+		return this
+	}
+
 	normalized() {
 		const len = this.length;
-		return len === 0 ? new Vector2D() : Vector2D.from(this).multiply(1 / len);
+		return len === 0 ? new Vector2D() : Vector2D.from(this).scale(1 / len);
 	}
 
 	normalize() {
 		const len = this.length;
-		len === 0 ? this.multiply(0) : this.multiply(1 / len);
+		len === 0 ? this.scale(0) : this.scale(1 / len);
 		return this
 	}
 
@@ -83,11 +86,68 @@ export class Vector2D {
 		return Math.sqrt((vec.x - this.x)**2 + (vec.y - this.y)**2)
 	}
 
+	/**
+	 * The result is:
+	 * - Positive if v is clockwise from u.
+	 * - Negative if v is counterclockwise from u.
+	 * - Zero if they are parallel.
+	 * 
+	 * Example:
+	 * 
+	 * u = (1,0) right
+	 * v = (0,1) down
+	 * 
+	 * Positive ⇒ turning clockwise from u to v.
+	 * 
+	 * u = (1,0) right
+	 * v = (0,-1) up
+	 * 
+	 * Negative ⇒ turning counterclockwise.
+	 */
 	cross(vec:Vector2D){
 		return this.x * vec.y - this.y * vec.x
 	}
 
+	/**
+	 * p.orient(a, b)
+	 *
+	 * Returns the orientation of point p relative to
+	 * the directed line a → b.
+	 *
+	 * > If I stand at a and look toward b,
+	 * > is p to the left or right?
+	 *
+	 * Positive  => p is on one side.
+	 * 
+	 * Negative  => p is on the other side.
+	 * 
+	 * Zero      => p lies on the line.
+	 */
 	orient(a:Vector2D, b:Vector2D) {
-		return Vector2D.from(a).subtract(this).cross(Vector2D.from(b).subtract(this))
+		return Vector2D.from(a).subtract(b).cross(Vector2D.from(this).subtract(b))
+	}
+
+	/**
+	 * Positive angles rotate clockwise.
+	 */
+	rotate(deg:number) {
+		const rad = deg / 180 * Math.PI
+		const cos = Math.cos(rad)
+		const sin = Math.sin(rad)
+		
+		const nx = this.x * cos - this.y * sin
+		this.y = this.x * sin + this.y * cos
+		this.x = nx
+		
+		return this
+	}
+
+	/**
+	 * Returns a rotated copy of this vector.
+	 *
+	 * Positive angles rotate clockwise.
+	 */
+	rotated(deg:number) {
+		return Vector2D.from(this).rotate(deg)
 	}
 };
