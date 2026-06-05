@@ -44,3 +44,10 @@ export function distributeIntEvenly(n: number, limits: readonly number[]): numbe
 
 	return result;
 }
+
+
+
+
+export function isNumber(n:unknown): n is Number {
+	return Number.isFinite(n) && typeof n === "number"
+}
