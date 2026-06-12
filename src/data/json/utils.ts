@@ -1,4 +1,4 @@
-import type { JSONValue } from "../types"
+import type { JSONValue } from "../../types"
 
 type WalkJsonArgs = { 
 	key: string|number|null
