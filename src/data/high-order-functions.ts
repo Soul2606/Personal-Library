@@ -1,9 +1,9 @@
 
-export function filterMap<T, U>(arr:T[], fnc:(arg:T)=>U|undefined) {
+export function filterMap<T, U>(arr:T[], fnc:(val:T, idx:number)=>U|undefined) {
 	const res:U[] = []
-	for (const el of arr) {
-		const r = fnc(el)
+	for (const [idx, val] of arr.entries()) {
+		const r = fnc(val, idx)
 		if (r !== undefined) res.push(r)
 	}
-return res
+	return res
 }
