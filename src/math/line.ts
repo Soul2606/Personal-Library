@@ -6,44 +6,6 @@ export class Line {
 		return new Line(Vector2D.from(l.a), Vector2D.from(l.b))
 	}
 
-	static slicePoint(l1: Line, l2: Line):{point:Vector2D, inSegment:boolean} {
-		const p = Vector2D.from(l1.a)
-		const r = Vector2D.from(l1.b).subtract(l1.a)
-
-		const q = Vector2D.from(l2.a)
-		const s = Vector2D.from(l2.b).subtract(l2.a)
-
-		const denom = r.cross(s)
-
-		if (denom === 0) {
-			throw new Error("Lines are parallel")
-		}
-
-		const t = q.subtract(p).cross(s) / denom
-
-		const point = p.add(r.scale(t))
-		return {
-			point,
-			inSegment:this.pointOnSegment(point, l1) && this.pointOnSegment(point, l2),
-		}
-	}
-
-	/**Assuming p is a point on the line between a and b */
-	static pointOnSegment(p: Vector2D, l:Line) {
-		const minX = Math.min(l.a.x, l.b.x)
-		const maxX = Math.max(l.a.x, l.b.x)
-
-		const minY = Math.min(l.a.y, l.b.y)
-		const maxY = Math.max(l.a.y, l.b.y)
-
-		return (
-			p.x >= minX &&
-			p.x <= maxX &&
-			p.y >= minY &&
-			p.y <= maxY
-		)
-	}
-
 	a:Vector2D
 	b:Vector2D
 	constructor(start:Vector2D, end:Vector2D) {
@@ -76,10 +38,6 @@ export class Line {
 	traceOnPoint(p:Vector2D) {
 		const epsilon = 0.0001
 		return Math.abs(this.orient(p)) < epsilon
-	}
-
-	onPoint(p:Vector2D) {
-		return this.traceOnPoint(p) && Line.pointOnSegment(p, this)
 	}
 
 	/**Read orient on Vector2d to lear more. */
