@@ -3,15 +3,15 @@ import { Vector2D } from "./vector2d.js";
 export class Line {
 
 	static from(l:Line) {
-		return new Line(Vector2D.from(l.start), Vector2D.from(l.end))
+		return new Line(Vector2D.from(l.a), Vector2D.from(l.b))
 	}
 
 	static slicePoint(l1: Line, l2: Line):{point:Vector2D, inSegment:boolean} {
-		const p = Vector2D.from(l1.start)
-		const r = Vector2D.from(l1.end).subtract(l1.start)
+		const p = Vector2D.from(l1.a)
+		const r = Vector2D.from(l1.b).subtract(l1.a)
 
-		const q = Vector2D.from(l2.start)
-		const s = Vector2D.from(l2.end).subtract(l2.start)
+		const q = Vector2D.from(l2.a)
+		const s = Vector2D.from(l2.b).subtract(l2.a)
 
 		const denom = r.cross(s)
 
@@ -30,11 +30,11 @@ export class Line {
 
 	/**Assuming p is a point on the line between a and b */
 	static pointOnSegment(p: Vector2D, l:Line) {
-		const minX = Math.min(l.start.x, l.end.x)
-		const maxX = Math.max(l.start.x, l.end.x)
+		const minX = Math.min(l.a.x, l.b.x)
+		const maxX = Math.max(l.a.x, l.b.x)
 
-		const minY = Math.min(l.start.y, l.end.y)
-		const maxY = Math.max(l.start.y, l.end.y)
+		const minY = Math.min(l.a.y, l.b.y)
+		const maxY = Math.max(l.a.y, l.b.y)
 
 		return (
 			p.x >= minX &&
@@ -44,15 +44,15 @@ export class Line {
 		)
 	}
 
-	start:Vector2D
-	end:Vector2D
+	a:Vector2D
+	b:Vector2D
 	constructor(start:Vector2D, end:Vector2D) {
-		this.start = Vector2D.from(start)
-		this.end = Vector2D.from(end)
+		this.a = Vector2D.from(start)
+		this.b = Vector2D.from(end)
 	}
 
 	get length() : number {
-		return this.start.distanceTo(this.end)
+		return this.a.distanceTo(this.b)
 	}
 	
 	set length(v: number) {
@@ -61,16 +61,16 @@ export class Line {
 
 		const half = v / 2
 
-		this.start = Vector2D.from(center).subtract(dir.scale(half))
-		this.end = Vector2D.from(center).add(dir.scale(half))
+		this.a = Vector2D.from(center).subtract(dir.scale(half))
+		this.b = Vector2D.from(center).add(dir.scale(half))
 	}
 
 	midpoint() {
-		return Vector2D.from(this.start).add(this.end).divide(2)
+		return Vector2D.from(this.a).add(this.b).divide(2)
 	}
 
 	toVec() {
-		return Vector2D.from(this.end).subtract(this.start).normalize()
+		return Vector2D.from(this.b).subtract(this.a).normalize()
 	}
 
 	traceOnPoint(p:Vector2D) {
@@ -84,6 +84,6 @@ export class Line {
 
 	/**Read orient on Vector2d to lear more. */
 	orient(p:Vector2D) {
-		return p.orient(this.start, this.end)
+		return p.orient(this.a, this.b)
 	}
 }
