@@ -1,4 +1,4 @@
-import type { Line } from "./line"
+import { Line } from "./line"
 import { Vector2D } from "./vector2d"
 
 
@@ -39,4 +39,16 @@ function inLineRect(p: Vector2D, l:Line) {
 		p.y >= minY &&
 		p.y <= maxY
 	)
+}
+
+
+
+
+/**Returns every edge from a polygon / closed path of points */
+export function getEdges(polygon:readonly Vector2D[]):Line[] {
+	if (polygon.length < 2) return []
+	return polygon.map((p,i) => new Line(
+		p,
+		polygon[(i+1) % polygon.length]!
+	))
 }
