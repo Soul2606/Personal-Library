@@ -150,4 +150,19 @@ export class Vector2D {
 	rotated(deg:number) {
 		return Vector2D.from(this).rotate(deg)
 	}
+
+	toKey() {
+		return this.x + ":" + this.y
+	}
+
+	fromKey(str:string) {
+		const arr = str.split(":")
+		if (arr.length !== 2) return
+		const [x, y] = arr.map(Number)
+		if (x === undefined) return
+		if (y === undefined) return
+		if (!Number.isFinite(x)) return
+		if (!Number.isFinite(y)) return
+		return new Vector2D(x, y)
+	}
 };
