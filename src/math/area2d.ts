@@ -33,41 +33,27 @@ type Point = Vector2D
 
 type Rect = {x:number, y:number, w:number, h:number}
 
-/**Does not mutate. Returns an area rect and the remaining pixels that is not covered by the rect. */
-function greedyArea(area:Point[]):{
-	rect:Rect
-	remaining:Point[]
-} {
+/**Mutates area. Returns an area rect and the remaining pixels that is not covered by the rect. */
+function greedyArea(area:Set<string>):Rect {
 	
-	const _area = Array.from(area)
-	.sort((a, b) =>
-		a.y !== b.y
-			? a.y - b.y
-			: a.x - b.x
-	)
+	const first = Array.from(area)[0]
+	if (first === undefined) throw new Error("Size 0 area provided");
+	
 
-	const first = _area[0]
-	if (first === undefined) return {
-		rect:{
-			x:0,
-			y:0,
-			w:0,
-			h:0
-		},
-		remaining:[]
-	}
+	area.delete(first)
 
-	_area.splice(0,1)
+	const fVec = Vector2D.fromKey(first)
+	if (fVec === undefined) throw new Error("Cannot convert from key");
 	
 	const rect:Rect = {
-		x:first.x,
-		y:first.y,
+		x:fVec.x,
+		y:fVec.y,
 		w:1,
 		h:1,
 	}
 
 	/**Fast lookup area remaining keys*/
-	const farKeys = new Set<string>(_area.map(Vector2D.toKey))
+	const farKeys = new Set<string>(area)
 
 	while (true) {
 		/**Next point key*/
@@ -97,14 +83,7 @@ function greedyArea(area:Point[]):{
 		}
 	}
 
-	return {
-		rect,
-		remaining:Array.from(farKeys.values()).map(k => {
-			const p = Vector2D.fromKey(k)
-			if (p === undefined) throw new Error("Cannot convert from key");
-			return p
-		})
-	}
+	return rect
 }
 
 
@@ -125,11 +104,16 @@ function rectToPoints(rect:Rect):Point[] {
 
 function greedyMesh(points:Point[]):Rect[] {
 	const rects:Rect[] = []
-	let current = Array.from(points)
+	let current = new Set(Array.from(points)
+	.sort((a, b) =>
+		a.y === b.y
+			? a.x - b.x
+			: a.y - b.y
+	).map(Vector2D.toKey))
+	
 
-	while (current.length > 0) {
-		const {rect, remaining} = greedyArea(current)
-		current = remaining
+	while (current.size > 0) {
+		const rect = greedyArea(current)
 		rects.push(rect)
 	}
 
