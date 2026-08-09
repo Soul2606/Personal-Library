@@ -1,69 +1,121 @@
+import { Vector2D } from "./vector2d.js";
 
 export type Area2d = string
 
 export function stringify(area:Point[]):Area2d {
-	const rows = toRows(area)
+	const areas = greedyMesh(area)
 
-	let str:string[] = []
-
-	for (const s of rows) {
-		str.push([s.s, s.e, s.y].join(":"))
-	}
-
-	return str.join(" ")
+	return areas.map(a =>
+		`${a.x}:${a.y}:${a.w}:${a.h}`
+	).join(" ")
 }
 
-export function parse(str:string) {
-	const parts = str.split(" ")
-	const rows = parts.map<Span>(span => {
-		const [s,e,y] = span.split(":").map(Number)
-		if (s === undefined || !Number.isFinite(s)) throw new Error("");
-		if (e === undefined || !Number.isFinite(e)) throw new Error("");
-		if (y === undefined || !Number.isFinite(y)) throw new Error("");
-		return {s,e,y} satisfies Span
+export function parse(str:string):Point[] {
+	const areas = str.split(" ")
+	const rects = areas.map<Rect>(str => {
+		const arr = str.split(":").map(Number)
+		if (arr.length !== 4) throw new Error("Invalid string");
+		const [x,y,w,h] = arr
+		if (x === undefined || !Number.isFinite(x)) throw new Error("Invalid string");
+		if (w === undefined || !Number.isFinite(w)) throw new Error("Invalid string");
+		if (y === undefined || !Number.isFinite(y)) throw new Error("Invalid string");
+		if (h === undefined || !Number.isFinite(h)) throw new Error("Invalid string");
+		return {x, y, w, h} satisfies Rect
 	})
 	
-
-	return fromRows(rows)
+	return rects.flatMap(rectToPoints)
 }
 
 
 
 
-type Point = {x:number, y:number}
+type Point = Vector2D
 
-type Span = {s:number, e:number, y:number}
+type Rect = {x:number, y:number, w:number, h:number}
 
-function toRows(area:Point[]):Span[]{
-	const rows:Span[] = []
+/**Does not mutate. Returns an area rect and the remaining pixels that is not covered by the rect. */
+function greedyArea(area:Point[]):{
+	rect:Rect
+	remaining:Point[]
+} {
+	
+	const _area = Array.from(area)
+	.sort((a, b) =>
+		a.y !== b.y
+			? a.y - b.y
+			: a.x - b.x
+	)
 
-	const _area = Array.from(area).sort((a,b)=>a.y-b.y).sort((a,b)=>a.x-b.x)
+	const first = _area[0]
+	if (first === undefined) return {
+		rect:{
+			x:0,
+			y:0,
+			w:0,
+			h:0
+		},
+		remaining:[]
+	}
 
-	for (const p of _area) {
-		rows
+	_area.splice(0,1)
+	
+	const rect:Rect = {
+		x:first.x,
+		y:first.y,
+		w:1,
+		h:1,
+	}
 
-		let s = rows.find(s => 
-			s.e === p.x - 1 && s.y === p.y
-		)
+	/**Fast lookup area remaining keys*/
+	const farKeys = new Set<string>(_area.map(Vector2D.toKey))
 
-		if (s) {
-			s.e = p.x
+	while (true) {
+		/**Next point key*/
+		const npk = Vector2D.toKey(new Vector2D(rect.x + rect.w, rect.y))
+		if (farKeys.has(npk)) {
+			farKeys.delete(npk)
+			rect.w++
 		} else {
-			s = {s:p.x, e:p.x, y:p.y} satisfies Span
-			rows.push(s)
+			break
 		}
 	}
 
-	return rows
+	while (true) {
+		const nRect:Rect = {
+			x:rect.x,
+			y:rect.y + 1,
+			h:1,
+			w:rect.w
+		}
+		/**Next point keys */
+		const npKeys = rectToPoints(nRect).map(Vector2D.toKey)
+		if (npKeys.every(k => farKeys.has(k))) {
+			npKeys.forEach(k => farKeys.delete(k))
+			rect.h++
+		} else {
+			break
+		}
+	}
+
+	return {
+		rect,
+		remaining:Array.from(farKeys.values()).map(k => {
+			const p = Vector2D.fromKey(k)
+			if (p === undefined) throw new Error("Cannot convert from key");
+			return p
+		})
+	}
 }
 
 
 
 
-function fromRows(rows:Span[]):Point[] {
+function rectToPoints(rect:Rect):Point[] {
 	const points:Point[] = []
-	for (const span of rows) {
-		points.push(...spanToPoints(span))
+	for (let i = 0; i < rect.w * rect.h; i++) {
+		const x = (i % rect.w) + rect.x
+		const y = Math.floor(i / rect.w) + rect.y
+		points.push(new Vector2D(x,y))
 	}
 	return points
 }
@@ -71,11 +123,15 @@ function fromRows(rows:Span[]):Point[] {
 
 
 
-function spanToPoints(span:Span):Point[] {
-	const points:Point[] = []
-	const y = span.y
-	for (let x = span.s; x < span.e + 1; x++) {
-		points.push({x,y})
+function greedyMesh(points:Point[]):Rect[] {
+	const rects:Rect[] = []
+	let current = Array.from(points)
+
+	while (current.length > 0) {
+		const {rect, remaining} = greedyArea(current)
+		current = remaining
+		rects.push(rect)
 	}
-	return points
+
+	return rects
 }
