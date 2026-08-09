@@ -19,6 +19,21 @@ export class Vector2D {
 		return new Vector2D(vec.x, vec.y)
 	}
 
+	static toKey(vec:Vector2D) {
+		return vec.x + ":" + vec.y
+	}
+
+	static fromKey(str:string) {
+		const arr = str.split(":")
+		if (arr.length !== 2) return
+		const [x, y] = arr.map(Number)
+		if (x === undefined) return
+		if (y === undefined) return
+		if (!Number.isFinite(x)) return
+		if (!Number.isFinite(y)) return
+		return new Vector2D(x, y)
+	}
+
 	// ======================= Properties =======================
 
 	x: number
@@ -149,20 +164,5 @@ export class Vector2D {
 	 */
 	rotated(deg:number) {
 		return Vector2D.from(this).rotate(deg)
-	}
-
-	toKey() {
-		return this.x + ":" + this.y
-	}
-
-	fromKey(str:string) {
-		const arr = str.split(":")
-		if (arr.length !== 2) return
-		const [x, y] = arr.map(Number)
-		if (x === undefined) return
-		if (y === undefined) return
-		if (!Number.isFinite(x)) return
-		if (!Number.isFinite(y)) return
-		return new Vector2D(x, y)
 	}
 };
