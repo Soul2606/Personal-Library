@@ -53,7 +53,7 @@ function greedyArea(area:Set<string>):Rect {
 	}
 
 	/**Fast lookup area remaining keys*/
-	const farKeys = new Set<string>(area)
+	const farKeys = area
 
 	while (true) {
 		/**Next point key*/
@@ -69,7 +69,7 @@ function greedyArea(area:Set<string>):Rect {
 	while (true) {
 		const nRect:Rect = {
 			x:rect.x,
-			y:rect.y + 1,
+			y:rect.y + rect.h,
 			h:1,
 			w:rect.w
 		}
@@ -110,7 +110,6 @@ function greedyMesh(points:Point[]):Rect[] {
 			? a.x - b.x
 			: a.y - b.y
 	).map(Vector2D.toKey))
-	
 
 	while (current.size > 0) {
 		const rect = greedyArea(current)
