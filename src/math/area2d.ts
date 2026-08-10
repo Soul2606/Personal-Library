@@ -11,6 +11,7 @@ export function stringify(area:Point[]):Area2d {
 }
 
 export function parse(str:string):Point[] {
+	if (str === "") return []
 	const areas = str.split(" ")
 	const rects = areas.map<Rect>(str => {
 		const arr = str.split(":").map(Number)
