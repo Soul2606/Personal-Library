@@ -185,6 +185,28 @@ export class Area2d {
 		}
 		return arr
 	}
+
+	/**
+	 * Removes all points outside the bonds of the box.
+	 * @param x pos
+	 * @param y pos
+	 * @param w width
+	 * @param h height
+	 */
+	public clip(x:number, y:number, w:number, h:number) {
+		const right = x + w
+		const bottom = y + h
+		for (const i of this.area) {
+			const p = this.point(i)
+			if (
+				p.x < x ||
+				p.y < y ||
+				p.x >= right ||
+				p.y >= bottom
+			) this.area.delete(i)
+		}
+		return this
+	}
 }
 
 
