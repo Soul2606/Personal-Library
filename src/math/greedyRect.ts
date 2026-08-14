@@ -1,8 +1,7 @@
 import { Vector2D } from "./vector2d.js";
+import { Area2d } from "./area2d.js";
 
-export type Area2d = string
-
-export function stringify(area:Point[]):Area2d {
+export function stringify(area:Area2d):string {
 	const areas = greedyMesh(area)
 
 	return areas.map(a =>
@@ -10,8 +9,8 @@ export function stringify(area:Point[]):Area2d {
 	).join(" ")
 }
 
-export function parse(str:string):Point[] {
-	if (str === "") return []
+export function parse(str:string) {
+	if (str === "") return new Area2d()
 	const areas = str.split(" ")
 	const rects = areas.map<Rect>(str => {
 		const arr = str.split(":").map(Number)
@@ -24,7 +23,7 @@ export function parse(str:string):Point[] {
 		return {x, y, w, h} satisfies Rect
 	})
 	
-	return rects.flatMap(rectToPoints)
+	return new Area2d(rects.flatMap(rectToPoints))
 }
 
 
@@ -35,20 +34,17 @@ type Point = Vector2D
 type Rect = {x:number, y:number, w:number, h:number}
 
 /**Mutates area. Returns an area rect and the remaining pixels that is not covered by the rect. */
-function greedyArea(area:Set<string>):Rect {
+function greedyArea(area:Area2d):Rect {
 	
-	const first = Array.from(area)[0]
+	const first = area.values()[0]
 	if (first === undefined) throw new Error("Size 0 area provided");
 	
 
 	area.delete(first)
-
-	const fVec = Vector2D.fromKey(first)
-	if (fVec === undefined) throw new Error("Cannot convert from key");
 	
 	const rect:Rect = {
-		x:fVec.x,
-		y:fVec.y,
+		x:first.x,
+		y:first.y,
 		w:1,
 		h:1,
 	}
@@ -58,7 +54,7 @@ function greedyArea(area:Set<string>):Rect {
 
 	while (true) {
 		/**Next point key*/
-		const npk = Vector2D.toKey(new Vector2D(rect.x + rect.w, rect.y))
+		const npk = new Vector2D(rect.x + rect.w, rect.y)
 		if (farKeys.has(npk)) {
 			farKeys.delete(npk)
 			rect.w++
@@ -75,7 +71,7 @@ function greedyArea(area:Set<string>):Rect {
 			w:rect.w
 		}
 		/**Next point keys */
-		const npKeys = rectToPoints(nRect).map(Vector2D.toKey)
+		const npKeys = rectToPoints(nRect)
 		if (npKeys.every(k => farKeys.has(k))) {
 			npKeys.forEach(k => farKeys.delete(k))
 			rect.h++
@@ -103,16 +99,11 @@ function rectToPoints(rect:Rect):Point[] {
 
 
 
-function greedyMesh(points:Point[]):Rect[] {
+function greedyMesh(area:Area2d):Rect[] {
 	const rects:Rect[] = []
-	let current = new Set(Array.from(points)
-	.sort((a, b) =>
-		a.y === b.y
-			? a.x - b.x
-			: a.y - b.y
-	).map(Vector2D.toKey))
+	const current = Area2d.clone(area)
 
-	while (current.size > 0) {
+	while (current.length > 0) {
 		const rect = greedyArea(current)
 		rects.push(rect)
 	}

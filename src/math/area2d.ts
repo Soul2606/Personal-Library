@@ -59,10 +59,12 @@ export class Area2d {
 	}
 
 	/**
-	 * Returns every point as an array.
+	 * Returns every point as an array from topleft to right.
 	 */
 	public values():Vector2D[] {
-		return Array.from(this.area.values().map(i => this.point(i)))
+		return [...this.area]
+		.sort((a,b)=>a-b)
+		.map(i => this.point(i))
 	}
 
 	
@@ -96,6 +98,10 @@ export class Area2d {
 	public delete(p:Vector2D) {
 		if (!this.inBounds(p)) return false
 		return this.area.delete(this.index(p))
+	}
+
+	public has(p:Vector2D) {
+		return this.area.has(this.index(p))
 	}
 
 	/**
