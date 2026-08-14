@@ -2,6 +2,14 @@ import { Vector2D } from "./vector2d.js";
 
 export class Area2d {
 
+	static clone(a:Area2d) {
+		const n = new Area2d()
+		n.area = new Set(a.area.values())
+		n.x = a.x
+		n.width = a.width
+		return n
+	}
+
 	private static widthCalc(pixels:Vector2D[]) {
 		let lowest = Infinity
 		let highest = -Infinity
@@ -38,7 +46,7 @@ export class Area2d {
 	}
 
 	public inBounds(p:Vector2D) {
-		return p.x < this.x || p.x > this.x + this.width
+		return p.x >= this.x && p.x < this.x + this.width
 	}
 
 	/**
@@ -56,6 +64,12 @@ export class Area2d {
 	public values():Vector2D[] {
 		return Array.from(this.area.values().map(i => this.point(i)))
 	}
+
+	
+	public get length() : number {
+		return this.area.size
+	}
+	
 
 	/**
 	 * Adds the point to the area. Mutates this area.
@@ -83,4 +97,90 @@ export class Area2d {
 		if (!this.inBounds(p)) return false
 		return this.area.delete(this.index(p))
 	}
+
+	/**
+	 * Synchronizes the two areas x offset and width without hanging the areas.
+	 */
+	private static sync(a0:Area2d, a1:Area2d) {
+		const left = Math.min(a0.x, a1.x)
+		const right = Math.max(left + a0.width, left + a1.width)
+		const x = left
+		const width = right - left
+
+		console.log("x", x, "width", width);
+		
+		
+		const na0 = new Area2d()
+		na0.x = x
+		na0.width = width
+		a0.values().forEach(p => na0.append(p))
+
+		const na1 = new Area2d()
+		na1.x = x
+		na1.width = width
+		a1.values().forEach(p => na1.append(p))
+
+		if (na0.x !== na1.x || na0.width !== na1.width) throw new Error("This algorithm does not work (:");
+		
+		return {a0, a1} as const
+	}
+
+	static union(a0: Area2d, a1: Area2d) {
+		const s = Area2d.sync(a0, a1)
+		for (const i of s.a1.area) {
+			s.a0.area.add(i)
+		}
+		return s.a0
+	}
+
+	static intersection(a0:Area2d, a1:Area2d) {
+		const s = Area2d.sync(a0, a1)
+		const n = Area2d.clone(s.a0)
+		n.area = new Set(
+			[...s.a0.area].filter(i => s.a1.area.has(i))
+		)
+		return n
+	}
+
+	static difference(a0:Area2d, a1:Area2d) {
+		const s = Area2d.sync(a0, a1)
+		const n = Area2d.clone(s.a0)
+		n.area = new Set(
+			[...s.a0.area].filter(i => !s.a1.area.has(i))
+		)
+		return n
+	}
+
+	public equal(a:Area2d) {
+		const s = Area2d.sync(this, a)
+		if (s.a0.length !== s.a1.length) return false
+
+		for (const i of s.a0.area) {
+			if (!s.a1.area.has(i)) return false
+		}
+
+		return true
+	}
+
+	public cut(c:Area2d) {
+		const s = Area2d.sync(this, c)
+		for (const i of s.a1.area) {
+			s.a0.area.delete(i)
+		}
+		return s.a0
+	}
+
+	public array2d<T>(v: T): T[][] {
+		const arr: T[][] = []
+		for (const i of this.area) {
+			const p = this.point(i)
+			const row = arr[p.y] ??= []
+			row[p.x] = v
+		}
+		return arr
+	}
 }
+
+
+
+
