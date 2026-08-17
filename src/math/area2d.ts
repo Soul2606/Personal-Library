@@ -1,4 +1,4 @@
-import { Vector2D } from "./vector2d.js";
+type Point = {x:number, y:number}
 
 export class Area2d {
 
@@ -10,7 +10,7 @@ export class Area2d {
 		return n
 	}
 
-	private static widthCalc(pixels:Vector2D[]) {
+	private static widthCalc(pixels:Point[]) {
 		let lowest = Infinity
 		let highest = -Infinity
 		for (const p of pixels) {
@@ -27,7 +27,7 @@ export class Area2d {
 	private width:number
 	private x:number
 
-	constructor(pixels:Vector2D[] = []) {
+	constructor(pixels:Point[] = []) {
 		const {lowest, highest} = Area2d.widthCalc(pixels)
 		const width = highest - lowest + 1
 		
@@ -37,46 +37,55 @@ export class Area2d {
 		this.area = new Set(pixels.map(p => this.index(p)))
 	}
 
-	private index(p:Vector2D) {
+	private index(p:Point) {
 		return p.y * this.width + p.x - this.x
 	}
 
-	private point(key:number):Vector2D {
-		return new Vector2D(Math.floor(key / this.width), key % this.width + this.x)
+	private pointX(idx:number) {
+		return idx % this.width + this.x
 	}
 
-	public inBounds(p:Vector2D) {
+	private pointY(idx:number) {
+		return Math.floor(idx / this.width)
+	}
+
+	private point(idx:number):Point {
+		return {
+			x:this.pointX(idx),
+			y:this.pointY(idx),
+		}
+	}
+
+	public inBounds(p:Point) {
 		return p.x >= this.x && p.x < this.x + this.width
 	}
 
 	/**
 	 * Adds the point to the area. Mutates this area. Will throw if out of bounds.
 	 */
-	public append(p:Vector2D) {
+	public append(p:Point) {
 		if (!this.inBounds(p)) throw new Error("Out of bounds");
 		this.area.add(this.index(p))
 		return this
 	}
 
 	/**
-	 * Returns every point as an array from topleft to right.
+	 * Returns every point as an array from left to right and top to bottom.
 	 */
-	public values():Vector2D[] {
+	public values():Point[] {
 		return [...this.area]
 		.sort((a,b)=>a-b)
 		.map(i => this.point(i))
 	}
 
-	
 	public get length() : number {
 		return this.area.size
 	}
-	
 
 	/**
 	 * Adds the point to the area. Mutates this area.
 	 */
-	public add(p:Vector2D) {
+	public add(p:Point) {
 		if (this.inBounds(p)) {
 			this.append(p)
 			return this
@@ -95,12 +104,12 @@ export class Area2d {
 	 * Deletes the point from the area. Mutates this area.
 	 * @returns true if success, false if fail or out of bounds.
 	 */
-	public delete(p:Vector2D) {
+	public delete(p:Point) {
 		if (!this.inBounds(p)) return false
 		return this.area.delete(this.index(p))
 	}
 
-	public has(p:Vector2D) {
+	public has(p:Point) {
 		return this.area.has(this.index(p))
 	}
 
@@ -179,9 +188,8 @@ export class Area2d {
 	public array2d<T>(v: T): T[][] {
 		const arr: T[][] = []
 		for (const i of this.area) {
-			const p = this.point(i)
-			const row = arr[p.y] ??= []
-			row[p.x] = v
+			const row = arr[this.pointY(i)] ??= []
+			row[this.pointX(i)] = v
 		}
 		return arr
 	}
@@ -197,13 +205,30 @@ export class Area2d {
 		const right = x + w
 		const bottom = y + h
 		for (const i of this.area) {
-			const p = this.point(i)
+			const px = this.pointX(i)
+			const py = this.pointY(i)
+				
 			if (
-				p.x < x ||
-				p.y < y ||
-				p.x >= right ||
-				p.y >= bottom
+				px < x ||
+				py < y ||
+				px >= right ||
+				py >= bottom
 			) this.area.delete(i)
+		}
+		return this
+	}
+
+	/**
+	 * Moves every point in the area by delta. Only works with integers.
+	 */
+	public translate(delta:Point) {
+		const dx = Math.floor(delta.x)
+		const dy = Math.floor(delta.y)
+		this.x += dx
+		if (dy === 0) return this
+		for (const idx of [...this.area]) {
+			this.area.delete(idx)
+			this.area.add(idx + this.width * dy)
 		}
 		return this
 	}
