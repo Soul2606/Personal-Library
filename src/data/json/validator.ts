@@ -45,9 +45,14 @@ function checkPrimTypes(str:string, val:JSONValue) {
 	}
 }
 
-function recurse(json:JSONValue, config:Config, path:string[]):string[] {
-	const errors:string[] = []
-	const add = (str:string) => errors.push(str + ` | At "${path.join(".")}"`)
+type Error = {
+	err:string
+	at:string
+}
+
+function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
+	const errors:Error[] = []
+	const add = (str:string) => errors.push({err:str, at:path.join(".")})
 	const conf = config
 
 	if (!checkPrimTypes(conf.type,json)) add("Wrong type")
@@ -108,36 +113,6 @@ function recurse(json:JSONValue, config:Config, path:string[]):string[] {
 
 
 
-function validate(json:JSONValue, config:Config):string[] {
+export function validate(json:JSONValue, config:Config) {
 	return recurse(json, config, ["$"])
 }
-
-
-
-const con:Config = {
-	type:"obj",
-	match:{
-		foo:{type:"num"},
-		faa:{type:"bool"},
-		arr:{
-			type:"arr",
-			match:{type:"num"}
-		},
-		tuple:{
-			type:"tuple",
-			match:[
-				{type:"num"},
-				{type:"str"},
-			]
-		}
-	}
-}
-
-console.log(validate({
-	arr:["asd", "a", "", null],
-	tuple:[
-		"hello",
-		0,
-		true,
-	]
-}, con))
