@@ -117,3 +117,29 @@ export function JSONEquals(obj1:JSONValue, obj2:JSONValue): boolean {
 	return setEquals(new Set(pathMap.keys()), paths)
 }
 
+
+
+/**
+ * Traverses down a json structure using a string path.
+ * The path uses a simple notation with each key being separated by a dot:
+ * example "users.0.privileges.admin".
+ * Works with arrays, use numbers to travel by index.
+ */
+export function getJSONFromPath(obj:JSONValue, path:string) {
+	const keys = path.split(".")
+	let current:JSONValue = obj
+	const legend:JSONValue[] = [current]
+
+	for (const key of keys) {
+		if (typeof current !== "object" || current === null) throw new Error("current is not an object");
+		const item = Array.isArray(current) ? current.at(Number(key)) : current[key]
+		if (item === undefined) throw new Error("item does not exist");
+		legend.push(item)
+		current = item
+	}
+
+	return {
+		val:current,
+		legend
+	}
+}
