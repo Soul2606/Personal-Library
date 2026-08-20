@@ -2,11 +2,11 @@ import type { JSONValue } from "../../types.ts"
 
 type Primitives = "str"|"num"|"bool"|"null"
 
-type Config = {
+export type Config = {
 	option?:boolean
 } & (
 	{
-		type:Primitives
+		type:Primitives|"any"
 	}|{
 		type:"record"
 		match:Config
@@ -51,6 +51,7 @@ type Error = {
 }
 
 function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
+	if (config.type === "any") return []
 	const errors:Error[] = []
 	const add = (str:string) => errors.push({err:str, at:path.join(".")})
 	const conf = config
