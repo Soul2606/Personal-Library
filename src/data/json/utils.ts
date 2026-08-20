@@ -122,11 +122,12 @@ export function JSONEquals(obj1:JSONValue, obj2:JSONValue): boolean {
 /**
  * Traverses down a json structure using a string path.
  * The path uses a simple notation with each key being separated by a dot:
- * example "users.0.privileges.admin".
+ * example "$.users.0.privileges.admin".
  * Works with arrays, use numbers to travel by index.
  */
 export function getJSONFromPath(obj:JSONValue, path:string) {
 	const keys = path.split(".")
+	if (keys.at(0) === "$") keys.shift()
 	let current:JSONValue = obj
 	const legend:JSONValue[] = [current]
 

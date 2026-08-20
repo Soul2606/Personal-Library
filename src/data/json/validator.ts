@@ -109,7 +109,7 @@ function recurse(json:JSONValue, config:Config, path:string[]):string[] {
 
 
 function validate(json:JSONValue, config:Config):string[] {
-	return recurse(json, config, [])
+	return recurse(json, config, ["$"])
 }
 
 
