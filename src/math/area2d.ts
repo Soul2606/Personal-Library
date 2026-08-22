@@ -67,7 +67,7 @@ export class Area2d {
 	 * Adds the point to the area. Mutates this area. Will throw if out of bounds.
 	 */
 	public append(x:number, y:number) {
-		if (!this.inBounds(x, y)) throw new Error("Out of bounds");
+		if (!this.inBounds(x, y)) throw new Error("Out of bounds " + x + ":" + y);
 		this.area.add(this.index(x, y))
 		return this
 	}
@@ -88,18 +88,13 @@ export class Area2d {
 	/**
 	 * Adds the point to the area. Mutates this area.
 	 */
-	public add(x:number, y:number) {
-		if (this.inBounds(x, y)) {
-			this.append(x, y)
-			return this
-		}
-		const pixels = this.values()
-		pixels.push({x, y})
-		const n = new Area2d(pixels)
-		this.area = n.area
-		this.width = n.width
-		this.x = n.x
-		
+	public add(x: number, y: number) {
+		const rx = x - this.x
+		const exLeft = Math.max(0, -rx)
+		const exRight = Math.max(0, rx + 1 - this.width)
+		console.log(exLeft,exRight);
+		this.expandWidth(exRight, exLeft)
+		this.append(x, y)
 		return this
 	}
 
@@ -188,15 +183,6 @@ export class Area2d {
 		return s.a0
 	}
 
-	public array2d<T>(v: T): T[][] {
-		const arr: T[][] = []
-		for (const i of this.area) {
-			const row = arr[this.pointY(i)] ??= []
-			row[this.pointX(i)] = v
-		}
-		return arr
-	}
-
 	/**
 	 * Removes all points outside the bonds of the box.
 	 * @param x pos
@@ -249,6 +235,7 @@ export class Area2d {
 
 		this.area = area
 		this.width += right + left
+		this.x -= left
 
 		return this
 	}
