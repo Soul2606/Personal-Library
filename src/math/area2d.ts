@@ -34,18 +34,21 @@ export class Area2d {
 		this.width = width
 		this.x = lowest
 		
-		this.area = new Set(pixels.map(p => this.index(p)))
+		this.area = new Set(pixels.map(p => this.index(p.x, p.y)))
 	}
 
-	private index(p:Point) {
-		return p.y * this.width + p.x - this.x
+	private index(x:number, y:number) {
+		isInt(x, y)
+		return y * this.width + x - this.x
 	}
 
 	private pointX(idx:number) {
+		isInt(idx)
 		return idx % this.width + this.x
 	}
 
 	private pointY(idx:number) {
+		isInt(idx)
 		return Math.floor(idx / this.width)
 	}
 
@@ -56,16 +59,16 @@ export class Area2d {
 		}
 	}
 
-	public inBounds(p:Point) {
-		return p.x >= this.x && p.x < this.x + this.width
+	public inBounds(x:number, y:number) {
+		return x >= this.x && x < this.x + this.width
 	}
 
 	/**
 	 * Adds the point to the area. Mutates this area. Will throw if out of bounds.
 	 */
-	public append(p:Point) {
-		if (!this.inBounds(p)) throw new Error("Out of bounds");
-		this.area.add(this.index(p))
+	public append(x:number, y:number) {
+		if (!this.inBounds(x, y)) throw new Error("Out of bounds");
+		this.area.add(this.index(x, y))
 		return this
 	}
 
@@ -85,13 +88,13 @@ export class Area2d {
 	/**
 	 * Adds the point to the area. Mutates this area.
 	 */
-	public add(p:Point) {
-		if (this.inBounds(p)) {
-			this.append(p)
+	public add(x:number, y:number) {
+		if (this.inBounds(x, y)) {
+			this.append(x, y)
 			return this
 		}
 		const pixels = this.values()
-		pixels.push(p)
+		pixels.push({x, y})
 		const n = new Area2d(pixels)
 		this.area = n.area
 		this.width = n.width
@@ -104,17 +107,17 @@ export class Area2d {
 	 * Deletes the point from the area. Mutates this area.
 	 * @returns true if success, false if fail or out of bounds.
 	 */
-	public delete(p:Point) {
-		if (!this.inBounds(p)) return false
-		return this.area.delete(this.index(p))
+	public delete(x:number, y:number) {
+		if (!this.inBounds(x, y)) return false
+		return this.area.delete(this.index(x, y))
 	}
 
-	public has(p:Point) {
-		return this.area.has(this.index(p))
+	public has(x:number, y:number) {
+		return this.area.has(this.index(x, y))
 	}
 
 	/**
-	 * Synchronizes the two areas x offset and width without hanging the areas.
+	 * Synchronizes the two areas x offset and width without changing the areas.
 	 */
 	private static sync(a0:Area2d, a1:Area2d) {
 		const left = Math.min(a0.x, a1.x)
@@ -128,12 +131,12 @@ export class Area2d {
 		const na0 = new Area2d()
 		na0.x = x
 		na0.width = width
-		a0.values().forEach(p => na0.append(p))
+		a0.values().forEach(p => na0.append(p.x, p.y))
 
 		const na1 = new Area2d()
 		na1.x = x
 		na1.width = width
-		a1.values().forEach(p => na1.append(p))
+		a1.values().forEach(p => na1.append(p.x, p.y))
 
 		if (na0.x !== na1.x || na0.width !== na1.width) throw new Error("This algorithm does not work (:");
 		
@@ -202,6 +205,7 @@ export class Area2d {
 	 * @param h height
 	 */
 	public clip(x:number, y:number, w:number, h:number) {
+		isInt(x, y, w, h)
 		const right = x + w
 		const bottom = y + h
 		for (const i of this.area) {
@@ -221,9 +225,8 @@ export class Area2d {
 	/**
 	 * Moves every point in the area by delta. Only works with integers.
 	 */
-	public translate(delta:Point) {
-		const dx = Math.floor(delta.x)
-		const dy = Math.floor(delta.y)
+	public translate(dx:number, dy:number) {
+		isInt(dx, dy)
 		this.x += dx
 		if (dy === 0) return this
 		for (const idx of [...this.area]) {
@@ -232,8 +235,31 @@ export class Area2d {
 		}
 		return this
 	}
+
+	private expandWidth(right:number, left=0) {
+		isInt(right, left)
+		if (right < 0) return this
+		if (left < 0) return this
+		
+		const area = new Set<number>()
+		for (const index of this.area) {
+			const y = this.pointY(index)
+			area.add(index + y * right + left)
+		}
+
+		this.area = area
+		this.width += right + left
+
+		return this
+	}
 }
 
 
 
+
+function isInt(...n:number[]) {
+	for (const _n of n) {
+		if (!Number.isInteger(_n)) throw new Error("number is not an integer");
+	}
+}
 
