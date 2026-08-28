@@ -2,7 +2,7 @@ import { Line } from "./line"
 import { Vector2D } from "./vector2d"
 
 
-export function slicePoint(l1: Line, l2: Line):{point:Vector2D, onSegment:boolean, inSegment:boolean}|null {
+export function slicePoint(l1: Line, l2: Line):{point:Vector2D, onSegment:()=>boolean, inSegment:()=>boolean}|null {
 	const p = l1.a
 	const r = Vector2D.from(l1.b).subtract(l1.a)
 
@@ -18,8 +18,8 @@ export function slicePoint(l1: Line, l2: Line):{point:Vector2D, onSegment:boolea
 	const point = p.add(r.scale(t))
 	return {
 		point,
-		onSegment:onLineRect(point, l1) && onLineRect(point, l2),
-		inSegment:inLineRect(point, l1) && inLineRect(point, l2)
+		onSegment:()=>onLineRect(point, l1) && onLineRect(point, l2),
+		inSegment:()=>inLineRect(point, l1) && inLineRect(point, l2)
 	}
 }
 
