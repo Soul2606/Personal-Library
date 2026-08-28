@@ -2,7 +2,7 @@ import { Line } from "./line"
 import { Vector2D } from "./vector2d"
 
 
-export function slicePoint(l1: Line, l2: Line):{point:Vector2D, inSegment:boolean}|null {
+export function slicePoint(l1: Line, l2: Line):{point:Vector2D, onSegment:boolean, inSegment:boolean}|null {
 	const p = l1.a
 	const r = Vector2D.from(l1.b).subtract(l1.a)
 
@@ -18,7 +18,8 @@ export function slicePoint(l1: Line, l2: Line):{point:Vector2D, inSegment:boolea
 	const point = p.add(r.scale(t))
 	return {
 		point,
-		inSegment:inLineRect(point, l1) && inLineRect(point, l2),
+		onSegment:onLineRect(point, l1) && onLineRect(point, l2),
+		inSegment:inLineRect(point, l1) && inLineRect(point, l2)
 	}
 }
 
@@ -26,6 +27,24 @@ export function slicePoint(l1: Line, l2: Line):{point:Vector2D, inSegment:boolea
 
 
 /**Is true if p is within the rectangle encompassing ab (line) */
+function onLineRect(p: Vector2D, l:Line) {
+	const minX = Math.min(l.a.x, l.b.x)
+	const maxX = Math.max(l.a.x, l.b.x)
+
+	const minY = Math.min(l.a.y, l.b.y)
+	const maxY = Math.max(l.a.y, l.b.y)
+
+	return (
+		p.x >= minX &&
+		p.x <= maxX &&
+		p.y >= minY &&
+		p.y <= maxY
+	)
+}
+
+
+
+/**Is true if p is exclusively within the rectangle encompassing ab (line) */
 function inLineRect(p: Vector2D, l:Line) {
 	const minX = Math.min(l.a.x, l.b.x)
 	const maxX = Math.max(l.a.x, l.b.x)
@@ -36,6 +55,11 @@ function inLineRect(p: Vector2D, l:Line) {
 	return (
 		p.x >= minX &&
 		p.x <= maxX &&
+		p.y > minY &&
+		p.y < maxY
+	) || (
+		p.x > minX &&
+		p.x < maxX &&
 		p.y >= minY &&
 		p.y <= maxY
 	)
