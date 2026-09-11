@@ -64,6 +64,9 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 				add("wrong type")
 				break
 			} 
+			if (Object.keys(json).length > Object.keys(conf.match).length) {
+				add("too many properties")
+			}
 			for (const [key, val] of Object.entries(conf.match)) {
 				const item = json[key]
 				if (item === undefined) {
@@ -79,7 +82,6 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 				break
 			} 
 			for (const [key, val] of Object.entries(json)) {
-				if (conf.match.option) continue
 				errors.push(...recurse(val, conf.match, [...path, key]))
 			}
 			break
@@ -89,7 +91,6 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 				break
 			}
 			for (const [idx,val] of json.entries()) {
-				if (conf.match.option) continue
 				errors.push(...recurse(val, conf.match, [...path, idx.toString()]))
 			}
 			break
