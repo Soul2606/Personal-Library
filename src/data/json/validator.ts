@@ -118,3 +118,30 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 export function validate(json:JSONValue, config:Config) {
 	return recurse(json, config, ["$"])
 }
+
+
+export type ConfType<T extends Config> = 
+	T["type"] extends "str"  ? string :
+	T["type"] extends "num"  ? number :
+	T["type"] extends "bool" ? boolean :
+	T["type"] extends "null" ? null :
+	T["type"] extends "any"  ? unknown :
+	T extends {type:"record", match: infer M extends Config} ?
+		Record<
+			string,
+			ConfType<M>
+		> :
+	T extends {type: "obj", match: infer M extends Record<string, Config>} ?
+		{
+			[K in keyof M]: ConfType<M[K]>
+		} :
+	T extends {type:"arr", match: infer M extends Config} ?
+		ConfType<M>[] :
+	T extends {type:"tuple", match: infer M extends Config[]} ?
+		{
+			[K in keyof M]: ConfType<M[K]>
+		} :
+	unknown
+
+
+
