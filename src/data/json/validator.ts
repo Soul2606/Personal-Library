@@ -2,9 +2,7 @@ import type { JSONValue } from "../../types.ts"
 
 type Primitives = "str"|"num"|"bool"|"null"
 
-export type Config = {
-	option?:boolean
-} & (
+export type Config = 
 	{
 		type:Primitives|"any"
 	}|{
@@ -12,7 +10,8 @@ export type Config = {
 		match:Config
 	}|{
 		type:"obj",
-		match:Record<string, Config>
+		match:Record<string, Config>,
+		optional?:string[]
 	}|{
 		type:"arr"
 		match:Config
@@ -20,7 +19,7 @@ export type Config = {
 		type:"tuple"
 		match:Config[]
 	}
-)
+
 
 function isObj(val:JSONValue): val is {[key:string]: JSONValue} {
 	return (typeof val === "object" && val !== null && !Array.isArray(val))
@@ -69,8 +68,9 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 			}
 			for (const [key, val] of Object.entries(conf.match)) {
 				const item = json[key]
+				const optional = conf.optional && conf.optional.includes(key)
 				if (item === undefined) {
-					if (!val.option) add(`key "${key}" is missing`)
+					if (!optional) add(`key "${key}" is missing`)
 				} else {
 					errors.push(...recurse(item, val, [...path, key]))
 				}
@@ -103,7 +103,7 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 			for (const [idx, val] of conf.match.entries()) {
 				const item = json.at(idx)
 				if (item === undefined) {
-					if (!val.option) add(`item at index "${idx}" is missing`)
+					add(`item at index "${idx}" is missing`)
 				} else {
 					errors.push(...recurse(item, val, [...path, idx.toString()]))
 				}
@@ -120,6 +120,12 @@ export function validate(json:JSONValue, config:Config) {
 }
 
 
+type TupleHas<O extends readonly unknown[], K> =
+	Extract<O[number], K> extends never
+		? false
+		: true
+
+
 export type ConfType<T extends Config> = 
 	T["type"] extends "str"  ? string :
 	T["type"] extends "num"  ? number :
@@ -131,9 +137,9 @@ export type ConfType<T extends Config> =
 			string,
 			ConfType<M>
 		> :
-	T extends {type: "obj", match: infer M extends Record<string, Config>} ?
+	T extends {type: "obj", match: infer M extends Record<string, Config>, optional?: infer O extends string[]|undefined} ?
 		{
-			[K in keyof M]: ConfType<M[K]>
+			[K in keyof M]: O extends string[] ? TupleHas<O, K> extends true ? ConfType<M[K]>|undefined : ConfType<M[K]> : ConfType<M[K]>
 		} :
 	T extends {type:"arr", match: infer M extends Config} ?
 		ConfType<M>[] :
@@ -145,3 +151,35 @@ export type ConfType<T extends Config> =
 
 
 
+type Test = ConfType<{
+	type:"obj",
+	optional:["foo"]
+	match:{
+		foo:{
+			type:"num",
+		},
+		faa:{
+			type:"bool"
+		},
+		stuff:{
+			type:"record",
+			match:{
+				type:"str"
+			}
+		},
+		list:{
+			type:"arr",
+			match:{
+				type:"num"
+			}
+		},
+		things:{
+			type:"tuple",
+			match:[
+				{type:"num"},
+				{type:"str"},
+				{type:"bool"},
+			]
+		}
+	}
+}>
