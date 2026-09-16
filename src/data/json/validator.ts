@@ -1,11 +1,10 @@
 import type { JSONValue } from "../../types.ts"
 
-type Primitives = "str"|"num"|"bool"|"null"
+type Primitives = "str"|"num"|"bool"|"null"|"any"
 
 export type Config = 
-	{
-		type:Primitives|"any"
-	}|{
+	Primitives
+	|{
 		type:"record"
 		match:Config
 	}|{
@@ -17,6 +16,9 @@ export type Config =
 		match:Config
 	}|{
 		type:"tuple"
+		match:Config[]
+	}|{
+		type:"union"
 		match:Config[]
 	}
 
@@ -50,12 +52,15 @@ type Error = {
 }
 
 function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
-	if (config.type === "any") return []
+	if (config === "any") return []
 	const errors:Error[] = []
 	const add = (str:string) => errors.push({err:str, at:path.join(".")})
 	const conf = config
 
-	if (!checkPrimTypes(conf.type,json)) add("Wrong type")
+	if (typeof conf === "string") {
+		if (!checkPrimTypes(conf,json)) add("Wrong type")
+		return errors
+	}
 
 	switch (conf.type) {
 		case "obj":
@@ -109,6 +114,17 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 				}
 			}
 			break
+		case "union":
+			const unionErrors:Error[] = []
+			for (const match of conf.match) {
+				const err = recurse(json, match, path)
+				if (err.length === 0) break
+				unionErrors.push(...err)
+			}
+			if (unionErrors.length > 0) {
+				add(`no type in union is valid ${unionErrors.map(err => `${err.err} at ${err.at}`).join(", ")}`)
+			}
+			break
 	}
 	return errors
 }
@@ -126,12 +142,12 @@ type TupleHas<O extends readonly unknown[], K> =
 		: true
 
 
-export type ConfType<T extends Config> = 
-	T["type"] extends "str"  ? string :
-	T["type"] extends "num"  ? number :
-	T["type"] extends "bool" ? boolean :
-	T["type"] extends "null" ? null :
-	T["type"] extends "any"  ? unknown :
+export type ConfType<T> = 
+	T extends "str"  ? string :
+	T extends "num"  ? number :
+	T extends "bool" ? boolean :
+	T extends "null" ? null :
+	T extends "any"  ? JSONValue :
 	T extends {type:"record", match: infer M extends Config} ?
 		Record<
 			string,
@@ -147,39 +163,7 @@ export type ConfType<T extends Config> =
 		{
 			[K in keyof M]: ConfType<M[K]>
 		} :
+	T extends {type:"union", match: infer M extends Config[]} ?
+		ConfType<M[number]> :
 	unknown
 
-
-
-type Test = ConfType<{
-	type:"obj",
-	optional:["foo"]
-	match:{
-		foo:{
-			type:"num",
-		},
-		faa:{
-			type:"bool"
-		},
-		stuff:{
-			type:"record",
-			match:{
-				type:"str"
-			}
-		},
-		list:{
-			type:"arr",
-			match:{
-				type:"num"
-			}
-		},
-		things:{
-			type:"tuple",
-			match:[
-				{type:"num"},
-				{type:"str"},
-				{type:"bool"},
-			]
-		}
-	}
-}>
