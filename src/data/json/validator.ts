@@ -10,7 +10,8 @@ export type Config =
 	}|{
 		type:"obj",
 		match:Record<string, Config>,
-		optional?:string[]
+		optional?:string[],
+		strict?:true
 	}|{
 		type:"arr"
 		match:Config
@@ -67,8 +68,8 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 			if (!isObj(json)) {
 				add("wrong type")
 				break
-			} 
-			if (Object.keys(json).length > Object.keys(conf.match).length) {
+			}
+			if (conf.strict && Object.keys(json).length > Object.keys(conf.match).length) {
 				add("too many properties")
 			}
 			for (const [key, val] of Object.entries(conf.match)) {
