@@ -1,4 +1,10 @@
-import type { JSONValue } from "../../types.ts"
+type JSONValue = 
+ | string
+ | number
+ | boolean
+ | null
+ | JSONValue[]
+ | { [key: string]: JSONValue|undefined }
 
 type Primitives = "str"|"num"|"bool"|"null"|"any"
 
@@ -117,13 +123,17 @@ function recurse(json:JSONValue, config:Config, path:string[]):Error[] {
 			break
 		case "union":
 			const unionErrors:Error[] = []
+			let success = false
 			for (const match of conf.match) {
 				const err = recurse(json, match, path)
-				if (err.length === 0) break
+				if (err.length === 0) {
+					success = true
+					break
+				}
 				unionErrors.push(...err)
 			}
-			if (unionErrors.length > 0) {
-				add(`no type in union is valid ${unionErrors.map(err => `${err.err} at ${err.at}`).join(", ")}`)
+			if (unionErrors.length > 0 && !success) {
+				add(`no type in union is valid. ${unionErrors.map(err => `${err.err} at ${err.at}`).join(", ")}`)
 			}
 			break
 	}
