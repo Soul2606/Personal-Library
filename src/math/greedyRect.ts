@@ -40,7 +40,7 @@ function greedyArea(area:Area2d):Rect {
 	if (first === undefined) throw new Error("Size 0 area provided");
 	
 
-	area.delete(first)
+	area.delete(first.x, first.y)
 	
 	const rect:Rect = {
 		x:first.x,
@@ -55,8 +55,8 @@ function greedyArea(area:Area2d):Rect {
 	while (true) {
 		/**Next point key*/
 		const npk = new Vector2D(rect.x + rect.w, rect.y)
-		if (farKeys.has(npk)) {
-			farKeys.delete(npk)
+		if (farKeys.has(npk.x, npk.y)) {
+			farKeys.delete(npk.x, npk.y)
 			rect.w++
 		} else {
 			break
@@ -72,8 +72,8 @@ function greedyArea(area:Area2d):Rect {
 		}
 		/**Next point keys */
 		const npKeys = rectToPoints(nRect)
-		if (npKeys.every(k => farKeys.has(k))) {
-			npKeys.forEach(k => farKeys.delete(k))
+		if (npKeys.every(k => farKeys.has(k.x, k.y))) {
+			npKeys.forEach(k => farKeys.delete(k.x, k.y))
 			rect.h++
 		} else {
 			break
