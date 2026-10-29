@@ -6,144 +6,137 @@ export type Vector2D = {
 
 export const Vector2D = {
 	from,
-	fnc
+	n,
+	add,
+	sub,
+	mul,
+	scale,
+	length,
+	normalized,
+	distanceTo,
+	cross,
+	orient,
+	rotated,
 }
 
-/**
- * Returns the methods on a clone of this vector
- */
+function n(x = 0, y = 0):Vector2D {
+	return {x, y}
+}
+
 function from(vec:Vector2D) {
-	return fnc(structuredClone(vec))
+	return {x:vec.x, y:vec.y}
+}
+
+function add(vecA:Vector2D, vecB:Vector2D) {
+	return n(vecA.x + vecB.x, vecA.y + vecB.y)
+}
+
+function sub(vecA:Vector2D, vecB:Vector2D) {
+	return n(vecA.x - vecB.x, vecA.y - vecB.y)
+}
+
+function mul(vecA:Vector2D, vecB:Vector2D) {
+	return n(vecA.x * vecB.x, vecA.y * vecB.y)
+}
+
+function scale(vec:Vector2D, value:number){
+	return n(vec.x * value, vec.y * value)
+}
+
+function length(vec:Vector2D): number {
+	return Math.sqrt(vec.x * vec.x + vec.y * vec.y);
+}
+
+function normalized(vec:Vector2D) {
+	const len = length(vec);
+	return len === 0 ? {x:0, y:0} : scale(vec, 1 / len);
+}
+
+function distanceTo(vecA:Vector2D, vecB:Vector2D){
+	return Math.sqrt((vecB.x - vecA.x)**2 + (vecB.y - vecA.y)**2)
 }
 
 /**
- * Returns the methods on this vector
+ * Which way do you turn to go from this direction to `vec`?
+ *
+ * Imagine facing along this vector, then turning to face `vec`.
+ * Uses screen coordinates (+y is down).
+ *
+ * - **Positive** → you turned clockwise
+ * - **Negative** → you turned counterclockwise
+ * - **Zero** → no turn (same direction or exactly opposite)
+ *
+ * Usually only the sign matters. The size grows with the vectors'
+ * lengths and with how sharp the turn is (largest at 90°).
+ *
+ * ```
+ *  up (0,-1)
+ *      ▲
+ *      │
+ *      └──► right (1,0)
+ *      │
+ *      ▼
+ *  down (0,1)
+ * ```
+ *
+ * @example
+ * const right = { x: 1, y: 0 }
+ * Vector2D.fnc(right).cross({ x: 0, y: 1 })  //  1  right → down: clockwise
+ * Vector2D.fnc(right).cross({ x: 0, y: -1 }) // -1  right → up: counterclockwise
+ * Vector2D.fnc(right).cross({ x: 5, y: 0 })  //  0  same direction
+ * Vector2D.fnc(right).cross({ x: -1, y: 0 }) //  0  opposite direction
  */
-function fnc(data:Vector2D) {
+function cross(vecA:Vector2D, vecB: Vector2D) {
+	return vecA.x * vecB.y - vecA.y * vecB.x
+}
 
-	function add(vec2:Vector2D) {
-		data.x += vec2.x
-		data.y += vec2.y
-		return methods
-	}
+/**
+ * Is this point to the left or right of the line from `a` to `b`?
+ *
+ * Imagine standing at `a` and walking toward `b`.
+ * Uses screen coordinates (+y is down).
+ *
+ * - **Positive** → the point is on your right
+ * - **Negative** → the point is on your left
+ * - **Zero** → the point is exactly on the line
+ *   (the line continues past `a` and `b`)
+ *
+ * Same sign meaning as `cross`: "right" means you would turn
+ * clockwise from your walking direction to face the point.
+ *
+ * ```
+ *            • (5,-5)  left  → -50
+ *
+ *   a (0,0) ──────────► b (10,0)       • (20,0)  on line → 0
+ *
+ *            • (5,5)   right → 50
+ * ```
+ *
+ * @example
+ * const a = { x: 0, y: 0 }
+ * const b = { x: 10, y: 0 }
+ * Vector2D.fnc({ x: 5, y: 5 }).orient(a, b)  //  50  right (below on screen)
+ * Vector2D.fnc({ x: 5, y: -5 }).orient(a, b) // -50  left (above on screen)
+ * Vector2D.fnc({ x: 20, y: 0 }).orient(a, b) //   0  on the line
+ */
+function orient(vec:Vector2D, a: Vector2D, b: Vector2D) {
+	const walkX = b.x - a.x
+	const walkY = b.y - a.y
+	const toPointX = vec.x - a.x
+	const toPointY = vec.y - a.y
+	return walkX * toPointY - walkY * toPointX
+}
 
-	function sub(vec2:Vector2D) {
-		data.x -= vec2.x
-		data.y -= vec2.y
-		return methods
-	}
-
-	function mul(vec2:Vector2D) {
-		data.x *= vec2.x
-		data.y *= vec2.y
-		return methods
-	}
-
-	function scale(value:number){
-		data.x *= value
-		data.y *= value
-		return methods
-	}
-
-	function length(): number {
-		return Math.sqrt(data.x * data.x + data.y * data.y);
-	}
-
-	function normalized() {
-		const len = length();
-		return len === 0 ? Vector2D.from({x:0, y:0}) : Vector2D.from(data).scale(1 / len);
-	}
-
-	function normalize() {
-		const len = length();
-		len === 0 ? Vector2D.fnc(data).scale(0) : Vector2D.fnc(data).scale(1 / len);
-		return methods
-	}
-
-	function distanceTo(vec:Vector2D){
-		return Math.sqrt((vec.x - data.x)**2 + (vec.y - data.y)**2)
-	}
-
-	/**
-	 * The result is:
-	 * - Positive if v is clockwise from u.
-	 * - Negative if v is counterclockwise from u.
-	 * - Zero if they are parallel.
-	 * 
-	 * Example:
-	 * 
-	 * u = (1,0) right
-	 * v = (0,1) down
-	 * 
-	 * Positive ⇒ turning clockwise from u to v.
-	 * 
-	 * u = (1,0) right
-	 * v = (0,-1) up
-	 * 
-	 * Negative ⇒ turning counterclockwise.
-	 */
-	function cross(vec:Vector2D){
-		return data.x * vec.y - data.y * vec.x
-	}
-
-	/**
-	 * p.orient(a, b)
-	 *
-	 * Returns the orientation of point p relative to
-	 * the directed line a → b.
-	 *
-	 * > If I stand at a and look toward b,
-	 * > is p to the left or right?
-	 *
-	 * Positive  => p is on one side.
-	 * 
-	 * Negative  => p is on the other side.
-	 * 
-	 * Zero      => p lies on the line.
-	 */
-	function orient(a:Vector2D, b:Vector2D) {
-		return Vector2D.from(a).sub(b).cross(Vector2D.from(data).sub(b).data)
-	}
-
-	/**
-	 * Positive angles rotate clockwise.
-	 */
-	function rotate(deg:number) {
-		const rad = deg / 180 * Math.PI
-		const cos = Math.cos(rad)
-		const sin = Math.sin(rad)
-		
-		const nx = data.x * cos - data.y * sin
-		data.y = data.x * sin + data.y * cos
-		data.x = nx
-		
-		return methods
-	}
-
-	/**
-	 * Returns a rotated copy of data vector.
-	 *
-	 * Positive angles rotate clockwise.
-	 */
-	function rotated(deg:number) {
-		return Vector2D.from(data).rotate(deg)
-	}
-
-	const methods = {
-		data,
-		length,
-		add,
-		sub,
-		mul,
-		scale,
-		normalized,
-		normalize,
-		distanceTo,
-		cross,
-		orient,
-		rotate,
-		rotated,
-	} as const
-
-	return methods
+/**
+ * Positive angles rotate clockwise.
+ */
+function rotated(vec:Vector2D, deg:number) {
+	const rad = deg / 180 * Math.PI
+	const cos = Math.cos(rad)
+	const sin = Math.sin(rad)
+	
+	const nx = vec.x * cos - vec.y * sin
+	const ny = vec.x * sin + vec.y * cos
+	
+	return n(nx, ny)
 }
