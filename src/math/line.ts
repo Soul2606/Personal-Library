@@ -14,7 +14,7 @@ export class Line {
 	}
 
 	get length() : number {
-		return this.a.distanceTo(this.b)
+		return Vector2D.distanceTo(this.a, this.b)
 	}
 	
 	set length(v: number) {
@@ -23,16 +23,16 @@ export class Line {
 
 		const half = v / 2
 
-		this.a = Vector2D.from(center).subtract(dir.scale(half))
-		this.b = Vector2D.from(center).add(dir.scale(half))
+		this.a = Vector2D.sub(center, Vector2D.scale(dir, half))
+		this.b = Vector2D.add(center, Vector2D.scale(dir, half))
 	}
 
 	midpoint() {
-		return Vector2D.from(this.a).add(this.b).divide(2)
+		return Vector2D.scale(Vector2D.add(this.a, this.b), 0.5)
 	}
 
 	toVec() {
-		return Vector2D.from(this.b).subtract(this.a).normalize()
+		return Vector2D.normalized(Vector2D.sub(this.b, this.a))
 	}
 
 	traceOnPoint(p:Vector2D) {
@@ -42,6 +42,6 @@ export class Line {
 
 	/**Read orient on Vector2d to lear more. */
 	orient(p:Vector2D) {
-		return p.orient(this.a, this.b)
+		return Vector2D.orient(p, this.a, this.b)
 	}
 }

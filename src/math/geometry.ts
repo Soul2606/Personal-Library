@@ -4,18 +4,18 @@ import { Vector2D } from "./vector2d"
 
 export function slicePoint(l1: Line, l2: Line):{point:Vector2D, onSegment:()=>boolean, inSegment:()=>boolean}|null {
 	const p = l1.a
-	const r = Vector2D.from(l1.b).subtract(l1.a)
+	const r = Vector2D.sub(l1.b, l1.a)
 
 	const q = l2.a
-	const s = Vector2D.from(l2.b).subtract(l2.a)
+	const s = Vector2D.sub(l2.b, l2.a)
 
-	const denom = r.cross(s)
+	const denom = Vector2D.cross(r, s)
 
    if (Math.abs(denom) < 1e-9) return null
 
-	const t = q.subtract(p).cross(s) / denom
+	const t = Vector2D.cross(Vector2D.sub(q, p), s) / denom
 
-	const point = p.add(r.scale(t))
+	const point = Vector2D.add(p, Vector2D.scale(r, t))
 	return {
 		point,
 		onSegment:()=>onLineRect(point, l1) && onLineRect(point, l2),

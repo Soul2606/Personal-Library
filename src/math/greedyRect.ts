@@ -54,7 +54,7 @@ function greedyArea(area:Area2d):Rect {
 
 	while (true) {
 		/**Next point key*/
-		const npk = new Vector2D(rect.x + rect.w, rect.y)
+		const npk = Vector2D.n(rect.x + rect.w, rect.y)
 		if (farKeys.has(npk.x, npk.y)) {
 			farKeys.delete(npk.x, npk.y)
 			rect.w++
@@ -91,7 +91,7 @@ function rectToPoints(rect:Rect):Point[] {
 	for (let i = 0; i < rect.w * rect.h; i++) {
 		const x = (i % rect.w) + rect.x
 		const y = Math.floor(i / rect.w) + rect.y
-		points.push(new Vector2D(x,y))
+		points.push(Vector2D.n(x,y))
 	}
 	return points
 }
